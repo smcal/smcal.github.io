@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-black.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script type="text/javascript" src="../libs/d3.js"></script>
+<style>
+html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
+
+</style>
+
+<title>California Wildfires 1992 - 2015</title>
+<script type="text/javascript" src="../libs/d3.js"></script>
+
+
+<body>
+
+<!-- Navbar -->
+<div class="w3-top">
+  <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
+    <a class="w3-bar-item w3-button w3-right w3-hide-large w3-hover-white w3-large w3-theme-l1" href="javascript:void(0)" onclick="w3_open()"><i class="fa fa-bars"></i></a>
+    <a href="#" class="w3-bar-item w3-button w3-hide-small w3-hover-white">About</a>
+    <a href="index.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Total</a>
+    <a href="monthly.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Monthly</a>
+    <a href="calimap.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Map</a>
+  </div>
+</div>
+
+
+
+<!-- Main content: shift it to the right by 250 pixels when the sidebar is visible -->
+<div class="w3-main" style="margin-left:250px">
+
+  <div class="w3-row w3-padding-64">
+    <div class="w3-twothird w3-container">
+        <div id="titleheader">
+            <p><h2>Location of fires in <span id="myyears"></span></h2>
+            <select class="yearlist"></select>
+            <select class="causelist"></select></p>
+        </div>
+        <script type="text/javascript">
+
+            //Width and height
+            var w = 600;
+            var h = 800;
+            var dataset = [];
+            var dataset2 = [];
+            var year = {};
+            var cause = {};
+            var myyear = [];
+            var mycause = [];
+
+            var projection = d3.geoAlbersUsa()
+                .translate([w+900, h/2]).scale([4000]);
+
+            //Define path generator, using the Albers USA projection
+            var path = d3.geoPath()
+                .projection(projection);
+
+            //Create SVG element
+            var svg = d3.select("body")
+                .append("svg")
+                .attr("width", w)
+                .attr("height", h);
+
+
+            //Load in GeoJSON data
+            d3.json("../data/CA.geo.json", function(json) {
+
+                //Bind data and create one path per GeoJSON feature
+                svg.selectAll("path")
+                    .data(json.features)
+                    .enter()
+                    .append("path")
+                    .attr("d", path)
+                    .style("fill", "blue");
+
+
+                //Define key function, to be used when binding data
+                var key = function(d) {
+                    return d.Fire_Year;
+                };
+
+                var q = d3.queue();
+                q.defer(function (callback) {
+                    d3.csv("../data/CaliforniaFires.csv", function (res) {
+                        callback(null, res);
+                    });
+
+                });
+
+                q.await(restOfCode);
+
+
+                function restOfCode(err, results)
+                {
+                    for (var i = 0; i < results.length; ++i)
+                    {
+                        year[results[i].Fire_Year] = 1;
+                        cause[results[i].Fire_Cause] = 1;
+
+                        if( results[i].Fire_Name === "" )
+                        {
+                            results[i].Fire_Name = "Unknown";
+                        }
+                        if( results[i].Fire_Year == "1992" && results[i].Fire_Cause == "Arson")
+                            dataset.push(results[i]);
+
+                    };
+
+                    for(var key in year)
+                    {
+                        myyear.push(key);
+
+                    };
+                    for(var key in cause)
+                    {
+                        mycause.push(key);
+
+                    };
+                    mycause.sort();
+
+                    d3.select(".yearlist")
+                        .selectAll('option')
+                        .data(myyear).enter()
+                        .append('option')
+                        .text(function (d) {return d; });
+
+                    d3.select(".causelist")
+                        .selectAll('option')
+                        .data(mycause).enter()
+                        .append('option')
+                        .text(function (d) {return d; });
+
+
+                    svg.selectAll("circle")
+                        .data(dataset)
+                        .enter()
+                        .append("circle")
+                        .attr("cx", function(d) {
+                            return projection([d.Longitude, d.Latitude])[0];
+                        })
+                        .attr("cy", function(d) {
+                            return projection([d.Longitude, d.Latitude])[1];
+                        })
+                        .attr("r", 5)
+                        .style("fill", "yellow")
+                        .style("stroke", "gray")
+                        .style("stroke-width", 0.25)
+                        .style("opacity", 0.75)
+                        .append("title")			//Simple tooltip
+                        .text(function(d) {
+                            return "Fire Name: " + d.Fire_Name + " - Fire Size in acres: " + d.Fire_Size + " - Year of Fire: " + d.Fire_Year;
+                        });
+
+                    d3.select("#titleheader")
+                        .select("#myyears")
+                        .text(d3.select(".yearlist").property('value') + " from " + d3.select(".causelist").property('value'));
+
+                    d3.select(".yearlist")
+                        .on("change", function(d)
+                        {
+                            dataset2 = [];
+                            for (var i = 0; i < results.length; ++i)
+                            {
+                                if( results[i].Fire_Year == d3.select(".yearlist").property('value') &&
+                                    results[i].Fire_Cause == d3.select(".causelist").property('value'))
+                                    dataset2.push(results[i]);
+                            }
+
+                            svg.selectAll("circle").remove();
+
+                            svg.selectAll("circle")
+                                .data(dataset2)
+                                .enter()
+                                .append("circle")
+                                .attr("cx", function(d) {
+                                    return projection([d.Longitude, d.Latitude])[0];
+                                })
+                                .attr("cy", function(d) {
+                                    return projection([d.Longitude, d.Latitude])[1];
+                                })
+                                .attr("r", 5)
+                                .style("fill", "yellow")
+                                .style("stroke", "gray")
+                                .style("stroke-width", 0.25)
+                                .style("opacity", 0.75)
+                                .append("title")			//Simple tooltip
+                                .text(function(d) {
+                                    return "Fire Name: " + d.Fire_Name + " - Fire Size in acres: " + d.Fire_Size + " - Year of Fire: " + d.Fire_Year;
+                                });
+
+                            d3.select("#titleheader")
+                                .select("#myyears")
+                                .text(d3.select(".yearlist").property('value') + " from " + d3.select(".causelist").property('value'));
+                        });
+
+                    d3.select(".causelist")
+                        .on("change", function(d)
+                        {
+                            dataset2 = [];
+                            for (var i = 0; i < results.length; ++i)
+                            {
+                                if( results[i].Fire_Year == d3.select(".yearlist").property('value') &&
+                                    results[i].Fire_Cause == d3.select(".causelist").property('value'))
+                                    dataset2.push(results[i]);
+                            }
+
+                            svg.selectAll("circle").remove();
+
+                            svg.selectAll("circle")
+                                .data(dataset2)
+                                .enter()
+                                .append("circle")
+                                .attr("cx", function(d) {
+                                    return projection([d.Longitude, d.Latitude])[0];
+                                })
+                                .attr("cy", function(d) {
+                                    return projection([d.Longitude, d.Latitude])[1];
+                                })
+                                .attr("r", 5)
+                                .style("fill", "yellow")
+                                .style("stroke", "gray")
+                                .style("stroke-width", 0.25)
+                                .style("opacity", 0.75)
+                                .append("title")			//Simple tooltip
+                                .text(function(d) {
+                                    return "Fire Name: " + d.Fire_Name + " - Fire Size in acres: " + d.Fire_Size + " - Year of Fire: " + d.Fire_Year;
+                                });
+
+                            d3.select("#titleheader")
+                                .select("#myyears")
+                                .text(d3.select(".yearlist").property('value') + " from " + d3.select(".causelist").property('value'));
+                        });
+
+                };
+
+            });
+
+        </script>
+    </div>
+  </div>
+
+  
+
+
+<!-- END MAIN -->
+</div>
+
+
+</body>
+</html>
