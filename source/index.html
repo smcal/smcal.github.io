@@ -53,7 +53,7 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
 <div class="w3-top">
   <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
     <a class="w3-bar-item w3-button w3-right w3-hide-large w3-hover-white w3-large w3-theme-l1" href="javascript:void(0)" onclick="w3_open()"><i class="fa fa-bars"></i></a>
-    <a href="#" class="w3-bar-item w3-button w3-hide-small w3-hover-white">About</a>
+    <a href="about.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">About</a>
     <a href="index.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Total</a>
     <a href="monthly.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Monthly</a>
     <a href="calimap.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Map</a>
@@ -72,19 +72,21 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
         </div>
         <div id="titleheader">
             <p><h2>Total Acres Burned for <span id="myyears"></span></h2>
-            <select class="yearlist"><option>All Years</option></select></p>
+            Hover over bars for additional detail.  Select a different year from the dropdown to filter the results.</p>
+            <p><select class="yearlist"><option>All Years</option></select></p>
         </div>
 
         <script type="text/javascript">
 
             var w = 600;
-            var h = 650;
+            var h = 450;
             var count = 0;
             var fireSize = [];
 
             var year = {};
             var myYear = [];
             var dataset = [];
+            var yScale = 0;
 
             var formatAsThousands = d3.format(",");
 
@@ -133,14 +135,18 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
                 var key = function (d) {
                     return d.value;
                 };
+
+                var maximumY = d3.max(fireSize);
+
                 var xScale = d3.scaleBand()
                     .domain(d3.range(count))
                     .rangeRound([0, w])
                     .paddingInner(0.05);
 
-                var yScale = d3.scaleLinear()
-                    .domain([0, d3.max(fireSize)])
+                yScale = d3.scaleLinear()
+                    .domain([-(maximumY * .02), maximumY])
                     .range([0, h]);
+
 
                 var svg = d3.select("body")
                     .append("svg")
@@ -163,7 +169,7 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
                         return yScale(d.value);
                     })
                     .attr("fill", function (d) {
-                        return "rgb(0, 0, " + Math.round(d.value * 10) + ")";
+                        return "rgb(0,"+ 100 + ", " + 100 + ")";
                     })
                     .on("mouseover", function (d) {
 
@@ -187,9 +193,6 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
                         //Hide the tooltip
                         d3.select("#tooltip").classed("hidden", true);
 
-                    })
-                    .on("click", function () {
-                        sortBars();
                     });
 
                 d3.select("#titleheader")
@@ -228,22 +231,28 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
 
                 d3.select(".yearlist")
                     .on("change", function (d) {
-                        dataset.fill(0);
+                        dataset = [];
                         for (var i = 0; i < results.length; ++i)
                         {
-                            if (results[i].Fire_Year == d3.select(".yearlist").property('value'))
+                            if (d3.select(".yearlist").property('value') === "All Years")
                             {
-                                dataset[results[i].Fire_Cause] += Math.floor(Math.round(parseFloat(results[i].Fire_Size)));
+                                if( !isNaN(dataset[results[i].Fire_Cause]))
+                                    dataset[results[i].Fire_Cause] += Math.floor(Math.round(parseFloat(results[i].Fire_Size)));
+                                else
+                                    dataset[results[i].Fire_Cause] = 0;
                             }
-                            else if (d3.select(".yearlist").property('value') === "All Years")
+                            else if (results[i].Fire_Year == d3.select(".yearlist").property('value'))
                             {
-                                // we are at all year selection
-                                dataset[results[i].Fire_Cause] += Math.floor(Math.round(parseFloat(results[i].Fire_Size)));
+                                if( !isNaN(dataset[results[i].Fire_Cause]))
+                                    dataset[results[i].Fire_Cause] += Math.floor(Math.round(parseFloat(results[i].Fire_Size)));
+                                else
+                                    dataset[results[i].Fire_Cause] = 0;
                             }
                         }
 
                         svg.selectAll("rect").remove();
                         var displayData = [];
+                        fireSize = [];
                         for (var key in dataset) {
                             fireSize.push(dataset[key]);
                             displayData.push({"key": key, "value": dataset[key]});
@@ -252,6 +261,12 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
                         var key = function (d) {
                             return d.value;
                         };
+
+                        var maximumY = d3.max(fireSize);
+
+                        yScale = d3.scaleLinear()
+                            .domain([-(maximumY * .02), maximumY])
+                            .range([0, h]);
 
                         //Create bars
                         svg.selectAll("rect")
@@ -269,7 +284,7 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
                                 return yScale(d.value);
                             })
                             .attr("fill", function (d) {
-                                return "rgb(0, 0, " + Math.round(d.value * 10) + ")";
+                                return "rgb(0,"+ 100 + ", " + 100 + ")";
                             })
                             .on("mouseover", function (d) {
 
@@ -293,9 +308,6 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
                                 //Hide the tooltip
                                 d3.select("#tooltip").classed("hidden", true);
 
-                            })
-                            .on("click", function () {
-                                sortBars();
                             });
 
                         //Define sort order flag

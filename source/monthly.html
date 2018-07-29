@@ -53,7 +53,7 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
 <div class="w3-top">
   <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
     <a class="w3-bar-item w3-button w3-right w3-hide-large w3-hover-white w3-large w3-theme-l1" href="javascript:void(0)" onclick="w3_open()"><i class="fa fa-bars"></i></a>
-    <a href="#" class="w3-bar-item w3-button w3-hide-small w3-hover-white">About</a>
+    <a href="about.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">About</a>
     <a href="index.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Total</a>
     <a href="monthly.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Monthly</a>
     <a href="calimap.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Map</a>
@@ -72,7 +72,8 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
         </div>
         <div id="titleheader">
             <p><h2>Number of acres burned by month in <span id="myyears"></span></h2>
-            <select class="yearlist"></select>
+            Hover over bars for additional detai.  Select a different year and cause from the dropdowns to filter the results.</p>
+            <p><select class="yearlist"></select>
             <select class="causelist"></select></p>
         </div>
         <script type="text/javascript">
@@ -84,6 +85,7 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
             var cause = {};
             var myyear = [];
             var mycause = [];
+            var yScale = 0;
             var causeMonthTotal = new Array(12).fill(0);
             var dateMonth = d3.timeFormat("%m");
 
@@ -159,8 +161,10 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
                     .domain([new Date(2018,0,1), new Date(2018,11,31)])
                     .range([10, w ]);
 
-                var yScale = d3.scaleLinear()
-                    .domain([0, d3.max(causeMonthTotal)])
+                var maximumY = d3.max(causeMonthTotal);
+
+                yScale = d3.scaleLinear()
+                    .domain([-(maximumY * .02), maximumY])
                     .range([0, h]);
 
                 var xAxis = d3.axisBottom()
@@ -188,13 +192,13 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
                         return yScale(d);
                     })
                     .attr("fill", function(d) {
-                        return "rgb(0, 0, " + Math.round(d * 10) + ")";
+                        return "rgb(0,"+ 100 + ", " + 100 + ")";
                     })
                     .on("mouseover", function(d) {
 
                         //Get this bar's x/y values, then augment for the tooltip
                         var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.bandwidth() / 2;
-                        var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2;
+                        var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2+20;
 
                         //Update the tooltip position and value
                         d3.select("#tooltip")
@@ -243,6 +247,12 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
 
                         svg.selectAll("rect").remove();
 
+                        var maximumY = d3.max(causeMonthTotal);
+
+                        yScale = d3.scaleLinear()
+                            .domain([-(maximumY * .02), maximumY])
+                            .range([0, h]);
+
                         svg.selectAll("rect")
                             .data(causeMonthTotal)
                             .enter()
@@ -258,7 +268,7 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
                                 return yScale(d);
                             })
                             .attr("fill", function(d) {
-                                return "rgb(0, 0, " + Math.round(d * 10) + ")";
+                                return "rgb(0,"+ 100 + ", " + 100 + ")";
                             })
                             .on("mouseover", function(d) {
 
@@ -313,6 +323,12 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
 
                         svg.selectAll("rect").remove();
 
+                        var maximumY = d3.max(causeMonthTotal);
+
+                        yScale = d3.scaleLinear()
+                            .domain([-(maximumY * .02), maximumY])
+                            .range([0, h]);
+
                         svg.selectAll("rect")
                             .data(causeMonthTotal)
                             .enter()
@@ -328,7 +344,7 @@ html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
                                 return yScale(d);
                             })
                             .attr("fill", function(d) {
-                                return "rgb(0, 0, " + Math.round(d * 10) + ")";
+                                return "rgb(0,"+ 100 + ", " + 100 + ")";
                             })
                             .on("mouseover", function(d) {
 

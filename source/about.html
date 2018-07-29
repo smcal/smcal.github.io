@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-black.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script type="text/javascript" src="../libs/d3.js"></script>
+<style>
+html,body,h1,h2,h3,h4,h5,h6,p {font-family: "Roboto", sans-serif;}
+
+</style>
+
+<title>California Wildfires 1992 - 2015</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    .row {
+        display: flex;
+    }
+
+    /* Create two equal columns that sits next to each other */
+    .column {
+        flex: 50%;
+        padding: 10px;
+    }
+</style>
+
+<body>
+
+<!-- Navbar -->
+<div class="w3-top">
+  <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
+    <a class="w3-bar-item w3-button w3-right w3-hide-large w3-hover-white w3-large w3-theme-l1" href="javascript:void(0)" onclick="w3_open()"><i class="fa fa-bars"></i></a>
+    <a href="about.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">About</a>
+    <a href="index.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Total</a>
+    <a href="monthly.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Monthly</a>
+    <a href="calimap.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Map</a>
+  </div>
+</div>
+
+
+
+<!-- Main content: shift it to the right by 250 pixels when the sidebar is visible -->
+<div class="w3-main" style="margin-left:250px">
+
+  <div class="w3-row w3-padding-64">
+    <div class="w3-twothird w3-container">
+        <h2>California Wildfires from 1992 - 2015</h2>
+        <p>This visualization is the final project for Summer 2018 session of CS-498 Data Visualization.  The user
+        is presented with a drill down story that informs the user on the types of wildfires that have occurred
+        in the period of 1992 - 2015.  The user can see the total number of acres that have burned during that period
+        and they can interactively investigate individual causes, individual years or both.  There is also a map
+        of California that maps the locations of the fires for a particular year and the tooltips inform the user
+        of the official name of the fire as well as the number of acres burned.  This visualization could assist
+        the user in determining trends as to which causes are prevalent during certain months.</p>
+        <p>Note: This data set is quite large and some of the views when making changes to either year or cause may
+        take a couple seconds to redisplay.  I originally was planning on doing this for the whole United States
+        but with almost 2 million records it would take a large amount of time to redisplay elements.  I wanted to use
+        the crossfilter library to handle this data but when a piazza post mentioned we were not allow to use it
+        I limited the data only to California.  For this reason the map portion does not have zooming capability.
+        Even on a fast computer zooming was frustrating so I cut that feature out.</p>
+        <p>Credit for the webpage goes to W3 Schools:
+            <a href="https://www.w3schools.com/w3css/tryw3css_templates_webpage.htm" target="_blank">Site Template</a>
+        <a href="https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_two_columns_flex" target="_blank"> About Page Template</a></p>
+
+        <div class="row">
+            <div class="column">
+                <h2>Scenes</h2>
+                <p>The main scene is presented as the first page of the website.  It is an overview consisting of the total acres
+                burned in California.  By default the total acres for all years is displayed.  From there the user
+                can choose any year to get the number of acres burned in that specific year.  I applied Tufte's rules
+                of minimalism by only showing the bar chart and presenting a tooltip with all the necessary
+                information when the user mouses over a column.</p>
+                <p>From here the user can choose the other scenes in any order they choose.  The second scene
+                presented is a monthly view where the user can select both the year and the cause of the fire
+                (taken directly from the data) and see the number of acres burned per month.  This allows the user
+                to determine if there is a pattern as to when certain types of causes are more prevalent at certain
+                months.  For example summer seems to be a favorite for arsonists.</p>
+                <p>The final scene is map of California with an overlay of the location of the fires.  The user
+                can choose both the year and the cause of the fire to see the actual location of the fire.  Mousing
+                over the location circles brings up a tooltip with the fire name the size and the year it occurred.  I
+                did not include and all years for two reasons, first it took about thirty seconds for the data to display
+                and when it did it covered the whole map.  Since zooming could not be provided as noted above it is
+                limited to just a year and a cause.  This visualization is useful since the user can geographically
+                see the most common areas where fires occur (Lightning is particularly interesting).</p>
+
+                <h2>Annotaions</h2>
+                <p>Every scene in this visualization has annotations.  The index page (Total from the menu bar).  There
+                is title indicating what this chart displays and the title also changes when the user changes the year
+                selection to point the year they have currently selected.  Also when mousing over the chart the user
+                can see the values for acres burned.</p>
+                <p>The Monthly chart has the same annotations as the Total chart but with an added axis at the
+                bottom to make it easier to see the month for each bar.</p>
+                <p>The Map has the same dynamic title as the other two for consistency.  Also the points overlayed on
+                the map are a visual annotation to the user of the location on the map and a tooltip is presented as
+                you mouse over the point displaying the official name of the fire if one exists as well the number of
+                acres burned for that fire.</p>
+            </div>
+            <div class="column">
+                <h2>Parameters</h2>
+                <p>The main parameters for all the visualization are the year and the cause of the fire.  They are
+                used as filters to allow the user to drill down to desired views.  These parameters are used to control
+                the views and the annotations on the charts.  The paramteers are in the form of drop downs showing a list
+                of all the allowable values.</p>
+                <h2>Triggers</h2>
+                <p>The triggers are controlled by dropdown lists that trigger events when the user makes a selection.  The
+                dropdown is a common visual element and a note informs the user that by selecting a different value they
+                can filter the chart.  For the bar charts the bars are sorted by size and that is shown visually by a
+                transition.</p>
+                <h2>Data Source</h2>
+                <p>The data for this visualization was acquired from <a href="https://www.kaggle.com/rtatman/188-million-us-wildfires"
+                target="_blank">Kaggle - US Wildfires</a> Because of the size of the data set (1.88 million records) I
+                filtered it down to only show California.  The only other modification done to the data was to remove columns
+                that were not going to be used so as to cut down on the size and to correct entry errors such as extra decimal
+                points in certain lat/lon values (32..1234 for example)</p>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  
+
+
+<!-- END MAIN -->
+</div>
+
+
+</body>
+</html>
