@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-black.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script type="text/javascript" src="../libs/d3.js"></script>
+<style>
+html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
+
+</style>
+
+<title>California Wildfires 1992 - 2015</title>
+<script type="text/javascript" src="../libs/d3.js"></script>
+
+<style type="text/css">
+    rect:hover {
+        fill: orange;
+    }
+
+    #tooltip {
+        position: absolute;
+        width: 200px;
+        height: auto;
+        padding: 10px;
+        background-color: white;
+        -webkit-border-radius: 10px;
+        -moz-border-radius: 10px;
+        border-radius: 10px;
+        -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+        -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+        pointer-events: none;
+    }
+
+    #tooltip.hidden {
+        display: none;
+    }
+
+    #tooltip p {
+        margin: 0;
+        font-family: sans-serif;
+        font-size: 16px;
+        line-height: 20px;
+    }
+
+</style>
+<body>
+
+<!-- Navbar -->
+<div class="w3-top">
+  <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
+    <a class="w3-bar-item w3-button w3-right w3-hide-large w3-hover-white w3-large w3-theme-l1" href="javascript:void(0)" onclick="w3_open()"><i class="fa fa-bars"></i></a>
+    <a href="about.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">About</a>
+    <a href="index.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Total</a>
+    <a href="monthly.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Monthly</a>
+    <a href="calimap.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Map</a>
+  </div>
+</div>
+
+
+
+<!-- Main content: shift it to the right by 250 pixels when the sidebar is visible -->
+<div class="w3-main" style="margin-left:250px">
+
+  <div class="w3-row w3-padding-64">
+    <div class="w3-twothird w3-container">
+        <div id="tooltip" class="hidden">
+            <p><strong>Total Acres Burned from <span id="value"></span></strong></p>
+        </div>
+        <div id="titleheader">
+            <p><h2>Number of acres burned by month in <span id="myyears"></span></h2>
+            Hover over bars for additional detail.  Select a different year and cause from the dropdowns to filter the results.</p>
+            <p><select class="yearlist"></select>
+            <select class="causelist"></select></p>
+        </div>
+        <script type="text/javascript">
+
+            //Width and height
+            var w = 600;
+            var h = 450;
+            var year = {};
+            var cause = {};
+            var myyear = [];
+            var mycause = [];
+            var yScale = 0;
+            var causeMonthTotal = new Array(12).fill(0);
+            var dateMonth = d3.timeFormat("%m");
+
+            var dateCalc = function( year, dayOfyear )
+            {
+                var temp = new Date( year, "0", "1" );
+
+                return temp.setDate(temp.getDate() + dayOfyear);
+            };
+
+            var q = d3.queue();
+            q.defer(function (callback) {
+                d3.csv("../data/CaliforniaFires.csv", function (res) {
+                    callback(null, res);
+                });
+
+            });
+
+            q.await(restOfCode);
+
+            function restOfCode(err, results)
+            {
+                for (var i = 0; i < results.length; ++i)
+                {
+                    year[results[i].Fire_Year] = 1;
+                    cause[results[i].Fire_Cause] = 1;
+
+                    if( results[i].Fire_Name === "" )
+                    {
+                        results[i].Fire_Name = "Unknown";
+                    }
+                    if( results[i].Fire_Year === "1992" && results[i].Fire_Cause === "Arson" )
+                    {
+                        var index = parseInt(dateMonth(dateCalc(results[i].Fire_Year, (+results[i].Day_Of_Year-1))) - 1);
+                        causeMonthTotal[index] += Math.floor(Math.round(parseFloat(results[i].Fire_Size)));
+
+                    }
+                };
+
+
+                for(var key in year)
+                {
+                    myyear.push(key);
+
+                };
+                for(var key in cause)
+                {
+                    mycause.push(key);
+
+                };
+                mycause.sort();
+
+                d3.select(".yearlist")
+                    .selectAll('option')
+                    .data(myyear).enter()
+                    .append('option')
+                    .text(function (d) {return d; });
+
+                d3.select(".causelist")
+                    .selectAll('option')
+                    .data(mycause).enter()
+                    .append('option')
+                    .text(function (d) {return d; });
+
+                mycause.sort();
+
+                var xScale = d3.scaleBand()
+                    .domain(d3.range(causeMonthTotal.length))
+                    .rangeRound([0, w])
+                    .paddingInner(0.05);
+
+                var xScale2 = d3.scaleTime()
+                    .domain([new Date(2018,0,1), new Date(2018,11,31)])
+                    .range([10, w ]);
+
+                var maximumY = d3.max(causeMonthTotal);
+
+                yScale = d3.scaleLinear()
+                    .domain([-(maximumY * .02), maximumY])
+                    .range([0, h]);
+
+                var xAxis = d3.axisBottom()
+                    .scale(xScale2)
+                    .tickFormat(d3.timeFormat("%B"));
+
+                var svg = d3.select("body")
+                    .append("svg")
+                    .attr("width", w)
+                    .attr("height", h);
+
+                //Create bars
+                svg.selectAll("rect")
+                    .data(causeMonthTotal)
+                    .enter()
+                    .append("rect")
+                    .attr("x", function(d, i) {
+                        return xScale(i);
+                    })
+                    .attr("y", function(d) {
+                        return h - 30 - yScale(d);
+                    })
+                    .attr("width", xScale.bandwidth())
+                    .attr("height", function(d) {
+                        return yScale(d);
+                    })
+                    .attr("fill", function(d) {
+                        return "rgb(0,"+ 100 + ", " + 100 + ")";
+                    })
+                    .on("mouseover", function(d) {
+
+                        //Get this bar's x/y values, then augment for the tooltip
+                        var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.bandwidth() / 2;
+                        var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2+20;
+
+                        //Update the tooltip position and value
+                        d3.select("#tooltip")
+                            .style("left", xPosition + "px")
+                            .style("top", yPosition + "px")
+                            .select("#value")
+                            .text(d3.select(".causelist").property('value') + " is " + d);
+
+                        //Show the tooltip
+                        d3.select("#tooltip").classed("hidden", false);
+
+                    })
+                    .on("mouseout", function() {
+
+                        //Hide the tooltip
+                        d3.select("#tooltip").classed("hidden", true);
+
+                    });
+
+                d3.select("#titleheader")
+                    .select("#myyears")
+                    .text(d3.select(".yearlist").property('value') + " from " + d3.select(".causelist").property('value'));
+
+                d3.select(".yearlist")
+                    .on("change", function(d)
+                    {
+                        causeMonthTotal.fill(0);
+                        for (var i = 0; i < results.length; ++i)
+                        {
+                            if( results[i].Fire_Year == d3.select(".yearlist").property('value') &&
+                                results[i].Fire_Cause == d3.select(".causelist").property('value'))
+                            {
+                                var index = parseInt(dateMonth(dateCalc(results[i].Fire_Year, (+results[i].Day_Of_Year-1))) - 1);
+
+                                if(!isNaN(causeMonthTotal[index]))
+                                {
+                                    causeMonthTotal[index] += Math.floor(Math.round(parseFloat(results[i].Fire_Size)));
+                                }
+                                else
+                                {
+                                    causeMonthTotal[index] = 0;
+                                }
+                            }
+
+                        }
+
+                        svg.selectAll("rect").remove();
+
+                        var maximumY = d3.max(causeMonthTotal);
+
+                        yScale = d3.scaleLinear()
+                            .domain([-(maximumY * .02), maximumY])
+                            .range([0, h]);
+
+                        svg.selectAll("rect")
+                            .data(causeMonthTotal)
+                            .enter()
+                            .append("rect")
+                            .attr("x", function(d, i) {
+                                return xScale(i);
+                            })
+                            .attr("y", function(d) {
+                                return h - 30 - yScale(d);
+                            })
+                            .attr("width", xScale.bandwidth())
+                            .attr("height", function(d) {
+                                return yScale(d);
+                            })
+                            .attr("fill", function(d) {
+                                return "rgb(0,"+ 100 + ", " + 100 + ")";
+                            })
+                            .on("mouseover", function(d) {
+
+                                //Get this bar's x/y values, then augment for the tooltip
+                                var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.bandwidth() / 2;
+                                var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2;
+
+                                //Update the tooltip position and value
+                                d3.select("#tooltip")
+                                    .style("left", xPosition + "px")
+                                    .style("top", yPosition + "px")
+                                    .select("#value")
+                                    .text(d3.select(".causelist").property('value') + " is " + d);
+
+                                //Show the tooltip
+                                d3.select("#tooltip").classed("hidden", false);
+
+                            })
+                            .on("mouseout", function() {
+
+                                //Hide the tooltip
+                                d3.select("#tooltip").classed("hidden", true);
+
+                            });
+
+                        d3.select("#titleheader")
+                            .select("#myyears")
+                            .text(d3.select(".yearlist").property('value') + " from " + d3.select(".causelist").property('value'));
+                    });
+                d3.select(".causelist")
+                    .on("change", function(d)
+                    {
+                        causeMonthTotal.fill(0);
+                        for (var i = 0; i < results.length; ++i)
+                        {
+                            if( results[i].Fire_Year == d3.select(".yearlist").property('value') &&
+                                results[i].Fire_Cause == d3.select(".causelist").property('value'))
+                            {
+                                var index = parseInt(dateMonth(dateCalc(results[i].Fire_Year, (+results[i].Day_Of_Year-1))) - 1);
+
+                                if(!isNaN(causeMonthTotal[index]))
+                                {
+                                    causeMonthTotal[index] += Math.floor(Math.round(parseFloat(results[i].Fire_Size)));
+                                }
+                                else
+                                {
+                                    causeMonthTotal[index] = 0;
+                                }
+                            }
+
+                        }
+
+                        svg.selectAll("rect").remove();
+
+                        var maximumY = d3.max(causeMonthTotal);
+
+                        yScale = d3.scaleLinear()
+                            .domain([-(maximumY * .02), maximumY])
+                            .range([0, h]);
+
+                        svg.selectAll("rect")
+                            .data(causeMonthTotal)
+                            .enter()
+                            .append("rect")
+                            .attr("x", function(d, i) {
+                                return xScale(i);
+                            })
+                            .attr("y", function(d) {
+                                return h - 30 - yScale(d);
+                            })
+                            .attr("width", xScale.bandwidth())
+                            .attr("height", function(d) {
+                                return yScale(d);
+                            })
+                            .attr("fill", function(d) {
+                                return "rgb(0,"+ 100 + ", " + 100 + ")";
+                            })
+                            .on("mouseover", function(d) {
+
+                                //Get this bar's x/y values, then augment for the tooltip
+                                var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.bandwidth() / 2;
+                                var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2;
+
+                                //Update the tooltip position and value
+                                d3.select("#tooltip")
+                                    .style("left", xPosition + "px")
+                                    .style("top", yPosition + "px")
+                                    .select("#value")
+                                    .text(d3.select(".causelist").property('value') + " is " + d);
+
+                                //Show the tooltip
+                                d3.select("#tooltip").classed("hidden", false);
+
+                            })
+                            .on("mouseout", function() {
+
+                                //Hide the tooltip
+                                d3.select("#tooltip").classed("hidden", true);
+
+                            });
+
+                        d3.select("#titleheader")
+                            .select("#myyears")
+                            .text(d3.select(".yearlist").property('value') + " from " + d3.select(".causelist").property('value'));
+                    });
+
+                svg.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", "translate(" + 14 + "," + (h - 20) + ")")
+                    .call(xAxis);
+            }
+
+        </script>
+    </div>
+  </div>
+
+  
+
+
+<!-- END MAIN -->
+</div>
+
+
+</body>
+</html>
